@@ -3,7 +3,7 @@ from __future__ import print_function
 import cv2
 import numpy as np
 from keras.models import Model
-from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Dropout
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as K
@@ -65,8 +65,9 @@ def get_unet():
     up9 = merge([UpSampling2D(size=(2, 2))(conv8), conv1], mode='concat', concat_axis=1)
     conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(up9)
     conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same')(conv9)
+    dropout_c9 = Dropout(0.34)(conv9)
 
-    conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(conv9)
+    conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(dropout_c9)
 
     model = Model(input=inputs, output=conv10)
 
@@ -111,7 +112,7 @@ def train_and_predict():
     print('Fitting model...')
     print('-'*30)
     model.fit(imgs_train, imgs_mask_train, batch_size=32, nb_epoch=20, verbose=1, shuffle=True,
-              callbacks=[model_checkpoint])
+              callbacks=[model_checkpoint], validation_split=0.3)
 
     print('-'*30)
     print('Loading and preprocessing test data...')
